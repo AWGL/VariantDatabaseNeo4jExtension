@@ -112,4 +112,93 @@ public class Dataset {
 
     }
 
+    @GET
+    @Path("/qualitycontrol")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response qualityControl() {
+
+        try {
+
+            StreamingOutput stream = new StreamingOutput() {
+
+                @Override
+                public void write(OutputStream os) throws IOException, WebApplicationException {
+
+                    JsonGenerator jg = objectMapper.getJsonFactory().createJsonGenerator(os, JsonEncoding.UTF8);
+
+                    jg.writeStartArray();
+
+                    try (Transaction tx = graphDb.beginTx()) {
+                        try (ResourceIterator<Node> iter = graphDb.findNodes(Labels.qualityControl)){
+
+                            while (iter.hasNext()) {
+                                Node qualityControlNode = iter.next();
+
+                                if (Event.getUserEventStatus(qualityControlNode, graphDb) == Event.UserEventStatus.PENDING_AUTH){
+
+                                    Relationship addedByRelationship = qualityControlNode.getSingleRelationship(Relationships.addedBy, Direction.OUTGOING);
+                                    Node addedByUserNode = addedByRelationship.getEndNode();
+
+                                    jg.writeStartObject();
+
+                                    jg.writeObjectFieldStart("event");
+                                    Framework.writeNodeProperties(qualityControlNode.getId(), qualityControlNode.getAllProperties(), qualityControlNode.getLabels(), jg);
+                                    jg.writeEndObject();
+
+                                    jg.writeObjectFieldStart("add");
+                                    User.writeLiteUserRecord(addedByUserNode.getId(), addedByUserNode.getLabels(), addedByUserNode.getProperty("fullName").toString(), addedByUserNode.getProperty("email").toString(), (boolean) addedByUserNode.getProperty("admin"), jg);
+                                    Framework.writeNodeProperties(addedByUserNode.getId(), addedByUserNode.getAllProperties(), addedByUserNode.getLabels(), jg);
+                                    jg.writeEndObject();
+
+                                    jg.writeNumberField("eventNodeId", qualityControlNode.getId());
+                                    jg.writeStringField("event", "Quality Control");
+                                    jg.writeBooleanField("value", (boolean) qualityControlNode.getProperty("passOrFail"));
+                                    if (qualityControlNode.hasProperty("evidence")) jg.writeStringField("evidence", qualityControlNode.getProperty("evidence").toString());
+
+                                    jg.writeObjectFieldStart("add");
+                                    User.writeLiteUserRecord(addedByRelationship.getEndNode().getId(), addedByRelationship.getEndNode().getLabels(), addedByRelationship.getEndNode().getProperty("fullName").toString(), addedByRelationship.getEndNode().getProperty("email").toString(), (boolean) addedByRelationship.getEndNode().getProperty("admin"), jg);
+                                    jg.writeNumberField("date",(long) addedByRelationship.getProperty("date"));
+                                    jg.writeEndObject();
+
+                                    Node runInfoNode = Event.getSubjectNodeFromEventNode(qualityControlNode, graphDb);
+
+                                    jg.writeObjectFieldStart("dataset");
+                                    Framework.writeNodeProperties(runInfoNode.getId(), runInfoNode.getAllProperties(), runInfoNode.getLabels(), jg);
+                                    jg.writeEndObject();
+
+                                    jg.writeObjectFieldStart("sample");
+                                    Node sampleNode = runInfoNode.getSingleRelationship(Relationships.hasData, Direction.INCOMING).getStartNode();
+                                    Framework.writeNodeProperties(sampleNode.getId(), sampleNode.getAllProperties(), sampleNode.getLabels(), jg);
+                                    jg.writeEndObject();
+
+                                    jg.writeEndObject();
+
+                                }
+
+                            }
+
+                        }
+                    }
+
+                    jg.writeEndArray();
+
+                    jg.flush();
+                    jg.close();
+
+                }
+
+            };
+
+            return Response.ok().entity(stream).type(MediaType.APPLICATION_JSON).build();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .build();
+        }
+
+    }
+
 }

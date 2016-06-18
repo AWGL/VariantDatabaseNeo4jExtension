@@ -5,9 +5,11 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.logging.Log;
+import scala.collection.immutable.Nil;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -57,7 +59,7 @@ public class User {
                     jg.writeStartObject();
 
                     try (Transaction tx = graphDb.beginTx()) {
-                        Node userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email").asText());
+                        Node userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email").asText().toLowerCase());
                         Framework.writeNodeProperties(userNode.getId(), userNode.getAllProperties(), userNode.getLabels(), jg);
                     }
 
@@ -70,7 +72,6 @@ public class User {
             };
 
             return Response.ok().entity(stream).type(MediaType.APPLICATION_JSON).build();
-
         } catch (Exception e) {
             log.error(e.getMessage());
             return Response
@@ -89,9 +90,9 @@ public class User {
         try {
 
             JsonNode jsonNode = objectMapper.readTree(json);
-            Node userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email").asText());
 
             try (Transaction tx = graphDb.beginTx()) {
+                Node userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email").asText().toLowerCase());
                 userNode.setProperty("password", jsonNode.get("password").asText());
                 tx.success();
             }
@@ -121,7 +122,7 @@ public class User {
 
                 userNode.setProperty("fullName", jsonNode.get("fullName").asText());
                 userNode.setProperty("password", jsonNode.get("password").asText());
-                userNode.setProperty("email", jsonNode.get("email").asText());
+                userNode.setProperty("email", jsonNode.get("email").asText().toLowerCase());
                 userNode.setProperty("admin", jsonNode.get("admin").asBoolean());
 
                 tx.success();
@@ -138,10 +139,17 @@ public class User {
 
     }
 
-    static void writeLiteUserRecord(Node userNode, JsonGenerator jg, GraphDatabaseService graphDb) throws IOException {
-        try (Transaction tx = graphDb.beginTx()) {
-            Framework.writeNodeProperties(userNode.getId(), userNode.getProperties("admin", "fullName", "email"), userNode.getLabels(), jg);
+    static void writeLiteUserRecord(final long id, final Iterable<Label> labels, final String fullName, final String email, final boolean admin, JsonGenerator jg) throws IOException {
+        jg.writeNumberField("id", id);
+        jg.writeStringField("fullName", fullName);
+        jg.writeStringField("email", email);
+        jg.writeBooleanField("admin", admin);
+
+        jg.writeArrayFieldStart("labels");
+        for (Label label : labels){
+            jg.writeString(label.name());
         }
+        jg.writeEndArray();
     }
 
 }

@@ -144,7 +144,7 @@ public class Pathogenicity {
                                     jg.writeEndObject();
 
                                     jg.writeObjectFieldStart("addedBy");
-                                    User.writeLiteUserRecord(addedByRelationship.getEndNode(), jg, graphDb);
+                                    User.writeLiteUserRecord(addedByRelationship.getEndNode().getId(), addedByRelationship.getEndNode().getLabels(), addedByRelationship.getEndNode().getProperty("fullName").toString(), addedByRelationship.getEndNode().getProperty("email").toString(), (boolean) addedByRelationship.getEndNode().getProperty("admin"), jg);
                                     jg.writeNumberField("date",(long) addedByRelationship.getProperty("date"));
                                     jg.writeEndObject();
 

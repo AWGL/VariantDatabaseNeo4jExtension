@@ -23,4 +23,5 @@ class Labels {
     static final Label feature = Label.label("Feature");
     static final Label canonical = Label.label("Canonical");
     static final Label disorder = Label.label("Disorder");
+    static final Label qualityControl = Label.label("QualityControl");
 }
