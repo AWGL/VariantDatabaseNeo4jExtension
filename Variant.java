@@ -16,6 +16,8 @@ import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.Date;
+import java.util.HashMap;
 
 /**
  * A class for working with variants
@@ -37,7 +39,7 @@ public class Variant {
     }
 
     /**
-     * POST {variantId:"variantId"} /variantdatabase/variant/add
+     * POST {variantId} /variantdatabase/variant/add
      * Adds new variant; must be in minimum representation
      */
     @POST
@@ -73,7 +75,7 @@ public class Variant {
 
     /**
      * POST {variantId} /variantdatabase/variant/info
-     * Returns variant and annotations
+     * Returns variant and genomic annotations
      */
     @POST
     @Path("/info")
@@ -118,8 +120,8 @@ public class Variant {
     }
 
     /**
-     * POST {variantId:"variantId"} to /variantdatabase/variant/observations
-     * Returns observations of a variant
+     * POST {variantId} to /variantdatabase/variant/observations
+     * Returns observations/counts of a variant
      */
     @POST
     @Path("/observations")
@@ -201,7 +203,7 @@ public class Variant {
 
     /**
      * POST {variantId} /variantdatabase/variant/annotation
-     * Returns variant annotations
+     * Returns all variant annotations
      */
     @POST
     @Path("/annotation")
@@ -253,6 +255,80 @@ public class Variant {
 
             return Response.ok().entity(stream).type(MediaType.APPLICATION_JSON).build();
 
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .build();
+        }
+
+    }
+
+    /**
+     * POST {variantId,userId,classification,evidence} to /variantdatabase/add/pathogenicity
+     * Adds variant pathogenicity. class must be in range 1-5.
+     */
+    @POST
+    @Path("/pathogenicity/add")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addPathogenicity(final String json) {
+
+        try {
+
+            JsonNode jsonNode = objectMapper.readTree(json);
+            int classification = jsonNode.get("classification").asInt();
+
+            //check classification is in range
+            if (classification < 1 || classification > 5){
+                throw new IllegalArgumentException("Illegal classification. Accepted values are one to five inclusive");
+            }
+
+            //get nodes
+            Node variantNode = graphDb.findNode(Labels.variant, "variantId", jsonNode.get("variantId"));
+            Node userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email"));
+
+            //check variant does not already have outstanding auths
+            Node lastEventNode = Event.getLastUserEventNode(variantNode, graphDb);
+
+            if (lastEventNode.getId() != variantNode.getId()){
+                Event.UserEventStatus status = Event.getUserEventStatus(lastEventNode, graphDb);
+
+                if (status == Event.UserEventStatus.PENDING_AUTH){
+                    throw new IllegalArgumentException("Cannot add pathogenicity. Auth pending.");
+                }
+            }
+
+            //add event
+            try (Transaction tx = graphDb.beginTx()) {
+                Node newEventNode = graphDb.createNode(Labels.pathogenicity);
+
+                //add properties
+                newEventNode.setProperty("classification", classification);
+
+                if (jsonNode.has("evidence") && !jsonNode.get("evidence").asText().equals("")) {
+                    newEventNode.setProperty("evidence", jsonNode.get("evidence").asText());
+                }
+
+                Relationship addedByRelationship = newEventNode.createRelationshipTo(userNode, Relationships.addedBy);
+                addedByRelationship.setProperty("date", new Date().getTime());
+
+                lastEventNode.createRelationshipTo(newEventNode, Relationships.hasEvent);
+
+                tx.success();
+            }
+
+            return Response
+                    .status(Response.Status.OK)
+                    .build();
+
+        } catch (IllegalArgumentException e) {
+            log.error(e.getMessage());
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .build();
         } catch (Exception e) {
             log.error(e.getMessage());
             return Response

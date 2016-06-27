@@ -38,8 +38,8 @@ public class Symbol {
     }
 
     /**
-     * POST symbolId /variantdatabase/symbol/info
-     *
+     * POST {symbolId} /variantdatabase/symbol/info
+     * Returns symbol info
      */
     @POST
     @Path("/info")

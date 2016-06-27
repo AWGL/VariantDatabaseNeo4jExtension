@@ -39,6 +39,10 @@ public class User {
         this.log = log;
     }
 
+    /**
+     * POST {email} /variantdatabase/user/info
+     * Returns info about a user
+     */
     @POST
     @Path("/info")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -81,6 +85,10 @@ public class User {
         }
     }
 
+    /**
+     * POST {email, password} /variantdatabase/user/update/password
+     * Overwrite user password
+     */
     @POST
     @Path("/update/password")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -108,6 +116,10 @@ public class User {
         }
     }
 
+    /**
+     * POST {email, fullName, password, admin} /variantdatabase/user/add
+     * Adds new user
+     */
     @POST
     @Path("/add")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -150,6 +162,11 @@ public class User {
             jg.writeString(label.name());
         }
         jg.writeEndArray();
+    }
+    static Node getUserNode(String email, GraphDatabaseService graphDb){
+        try (Transaction tx = graphDb.beginTx()) {
+            return graphDb.findNode(Labels.user, "email", email);
+        }
     }
 
 }

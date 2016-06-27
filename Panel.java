@@ -179,7 +179,7 @@ public class Panel {
     }
 
     /**
-     * POST userNodeId, list of genes and panelName /variantdatabase/panel/add
+     * POST {email, list[symbolId], panelId} /variantdatabase/panel/add
      * Adds new gene panel
      */
     @POST
@@ -193,11 +193,11 @@ public class Panel {
             JsonNode jsonNode = objectMapper.readTree(json);
 
             try (Transaction tx = graphDb.beginTx()) {
-                Node userNode = graphDb.findNode(Labels.user, "userId", jsonNode.get("userId").asText());
+                Node userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email").asText());
 
                 //make panel node
                 Node panelNode = graphDb.createNode(Labels.panel);
-                panelNode.setProperty("panelName", jsonNode.get("panelName").asText());
+                panelNode.setProperty("panelId", jsonNode.get("panelId").asText());
 
                 //link to user
                 Relationship designedByRelationship = panelNode.createRelationshipTo(userNode, Relationships.designedBy);

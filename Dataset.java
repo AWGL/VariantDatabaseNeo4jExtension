@@ -2,6 +2,7 @@ package nhs.genetics.cardiff.variantdatabase.plugin;
 
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.neo4j.graphdb.*;
 import org.neo4j.logging.Log;
@@ -15,6 +16,7 @@ import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.Date;
 
 /**
  * A class for working with datasets
@@ -36,13 +38,13 @@ public class Dataset {
     }
 
     /**
-     * GET /variantdatabase/dataset/info
-     * Returns all QC passing analyses
+     * GET /variantdatabase/dataset/info/passed
+     * Returns all QC passing datasets
      */
     @GET
-    @Path("/info")
+    @Path("/info/passed")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response info() {
+    public Response passed() {
 
         try {
 
@@ -76,7 +78,7 @@ public class Dataset {
                                         Framework.writeNodeProperties(sampleNode.getId(), sampleNode.getAllProperties(), sampleNode.getLabels(), jg);
                                         jg.writeEndObject();
 
-                                        //write analyses
+                                        //write dataset
                                         jg.writeArrayFieldStart("datasets");
 
                                         jg.writeStartObject();
@@ -112,10 +114,14 @@ public class Dataset {
 
     }
 
+    /**
+     * GET /variantdatabase/dataset/info/pending
+     * Returns all datasets requiring QC
+     */
     @GET
-    @Path("/qualitycontrol")
+    @Path("/info/pending")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response qualityControl() {
+    public Response pending() {
 
         try {
 
@@ -129,50 +135,27 @@ public class Dataset {
                     jg.writeStartArray();
 
                     try (Transaction tx = graphDb.beginTx()) {
-                        try (ResourceIterator<Node> iter = graphDb.findNodes(Labels.qualityControl)){
+                        try (ResourceIterator<Node> iter = graphDb.findNodes(Labels.dataset)){
 
                             while (iter.hasNext()) {
-                                Node qualityControlNode = iter.next();
+                                Node datasetNode = iter.next();
 
-                                if (Event.getUserEventStatus(qualityControlNode, graphDb) == Event.UserEventStatus.PENDING_AUTH){
+                                //check run has passed QC
+                                Node lastEventNode = Event.getLastUserEventNode(datasetNode, graphDb);
 
-                                    Relationship addedByRelationship = qualityControlNode.getSingleRelationship(Relationships.addedBy, Direction.OUTGOING);
-                                    Node addedByUserNode = addedByRelationship.getEndNode();
-
+                                if (lastEventNode.getId() == datasetNode.getId()){
                                     jg.writeStartObject();
 
-                                    jg.writeObjectFieldStart("event");
-                                    Framework.writeNodeProperties(qualityControlNode.getId(), qualityControlNode.getAllProperties(), qualityControlNode.getLabels(), jg);
-                                    jg.writeEndObject();
-
-                                    jg.writeObjectFieldStart("add");
-                                    User.writeLiteUserRecord(addedByUserNode.getId(), addedByUserNode.getLabels(), addedByUserNode.getProperty("fullName").toString(), addedByUserNode.getProperty("email").toString(), (boolean) addedByUserNode.getProperty("admin"), jg);
-                                    Framework.writeNodeProperties(addedByUserNode.getId(), addedByUserNode.getAllProperties(), addedByUserNode.getLabels(), jg);
-                                    jg.writeEndObject();
-
-                                    jg.writeNumberField("eventNodeId", qualityControlNode.getId());
-                                    jg.writeStringField("event", "Quality Control");
-                                    jg.writeBooleanField("value", (boolean) qualityControlNode.getProperty("passOrFail"));
-                                    if (qualityControlNode.hasProperty("evidence")) jg.writeStringField("evidence", qualityControlNode.getProperty("evidence").toString());
-
-                                    jg.writeObjectFieldStart("add");
-                                    User.writeLiteUserRecord(addedByRelationship.getEndNode().getId(), addedByRelationship.getEndNode().getLabels(), addedByRelationship.getEndNode().getProperty("fullName").toString(), addedByRelationship.getEndNode().getProperty("email").toString(), (boolean) addedByRelationship.getEndNode().getProperty("admin"), jg);
-                                    jg.writeNumberField("date",(long) addedByRelationship.getProperty("date"));
-                                    jg.writeEndObject();
-
-                                    Node runInfoNode = Event.getSubjectNodeFromEventNode(qualityControlNode, graphDb);
-
-                                    jg.writeObjectFieldStart("dataset");
-                                    Framework.writeNodeProperties(runInfoNode.getId(), runInfoNode.getAllProperties(), runInfoNode.getLabels(), jg);
-                                    jg.writeEndObject();
-
+                                    Node sampleNode = datasetNode.getSingleRelationship(Relationships.hasData, Direction.INCOMING).getStartNode();
                                     jg.writeObjectFieldStart("sample");
-                                    Node sampleNode = runInfoNode.getSingleRelationship(Relationships.hasData, Direction.INCOMING).getStartNode();
                                     Framework.writeNodeProperties(sampleNode.getId(), sampleNode.getAllProperties(), sampleNode.getLabels(), jg);
                                     jg.writeEndObject();
 
+                                    jg.writeObjectFieldStart("datset");
+                                    Framework.writeNodeProperties(datasetNode.getId(), datasetNode.getAllProperties(), datasetNode.getLabels(), jg);
                                     jg.writeEndObject();
 
+                                    jg.writeEndObject();
                                 }
 
                             }
@@ -191,6 +174,74 @@ public class Dataset {
 
             return Response.ok().entity(stream).type(MediaType.APPLICATION_JSON).build();
 
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .build();
+        }
+
+    }
+
+    /**
+     * POST {sampleId, worklistId, seqId, email, passOrFail, evidence} /variantdatabase/dataset/add/qc
+     * Adds QC node to dataset
+     */
+    @POST
+    @Path("/add/qc")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addQc(final String json) {
+
+        try {
+
+            JsonNode jsonNode = objectMapper.readTree(json);
+
+            Node userNode = User.getUserNode(jsonNode.get("email").asText(), graphDb);
+            Node datasetNode = Framework.findDatasetNode(jsonNode.get("sampleId").asText(), jsonNode.get("worklistId").asText(), jsonNode.get("seqId").asText(), graphDb);
+
+            //check dataset does not already have outstanding auths
+            Node lastEventNode = Event.getLastUserEventNode(datasetNode, graphDb);
+
+            if (lastEventNode.getId() != datasetNode.getId()){
+                Event.UserEventStatus status = Event.getUserEventStatus(lastEventNode, graphDb);
+
+                if (status == Event.UserEventStatus.PENDING_AUTH){
+                    throw new IllegalArgumentException("Cannot add QC result. Auth pending.");
+                }
+
+            }
+
+            //add event
+            try (Transaction tx = graphDb.beginTx()) {
+                Node newEventNode = graphDb.createNode(Labels.qualityControl);
+
+                //add properties
+                newEventNode.setProperty("passOrFail", jsonNode.get("passOrFail").asBoolean());
+
+                if (jsonNode.has("evidence") && !jsonNode.get("evidence").asText().equals("")) {
+                    newEventNode.setProperty("evidence", jsonNode.get("evidence").asText());
+                }
+
+                Relationship addedByRelationship = newEventNode.createRelationshipTo(userNode, Relationships.addedBy);
+                addedByRelationship.setProperty("date", new Date().getTime());
+
+                lastEventNode.createRelationshipTo(newEventNode, Relationships.hasEvent);
+
+                tx.success();
+            }
+
+            return Response
+                    .status(Response.Status.OK)
+                    .build();
+
+        } catch (IllegalArgumentException e) {
+            log.error(e.getMessage());
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .build();
         } catch (Exception e) {
             log.error(e.getMessage());
             return Response

@@ -37,8 +37,8 @@ public class Sample {
     }
 
     /**
-     * POST sampleId /variantdatabase/sample/info
-     * Returns sample and all analyses
+     * POST {sampleId} /variantdatabase/sample/info
+     * Returns sample info
      */
     @POST
     @Path("/info")
@@ -58,11 +58,7 @@ public class Sample {
 
                     try (Transaction tx = graphDb.beginTx()) {
                         Node sampleNode = graphDb.findNode(Labels.sample, "sampleId", jsonNode.get("sampleId").asText());
-
-                        if (sampleNode != null) {
-                            Framework.writeNodeProperties(sampleNode.getId(), sampleNode.getAllProperties(), sampleNode.getLabels(), jg);
-                        }
-
+                        Framework.writeNodeProperties(sampleNode.getId(), sampleNode.getAllProperties(), sampleNode.getLabels(), jg);
                     }
 
                     jg.writeEndObject();

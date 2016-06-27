@@ -53,11 +53,11 @@ public class Workflow {
     }
 
     /**
-     * POST /variantdatabase/workflow/rarevariant
-     * Returns variants for a sample following the varaint workflow
+     * POST {sampleId, worklistId, seqId} /variantdatabase/workflow/rare
+     * Returns all variants stratified for rareness in varaint frequency populations
      */
     @POST
-    @Path("/rarevariant")
+    @Path("/rare")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @WorkflowAnnotation(name = "Rare Variant Workflow v1", description = "A workflow to prioritise rare calls")
@@ -85,7 +85,7 @@ public class Workflow {
                             }
 
 
-                            //todoo
+                            //todo
 
                         }
                     }
@@ -110,6 +110,10 @@ public class Workflow {
 
     }
 
+    /**
+     * GET /variantdatabase/workflow/info
+     * Returns info about available variant filter workflows
+     */
     @GET
     @Path("/info")
     @Produces(MediaType.APPLICATION_JSON)
@@ -156,6 +160,10 @@ public class Workflow {
                     .build();
         }
 
+    }
+
+    private void filterVariantsByPanel(){
+        //TODO
     }
 
 }
