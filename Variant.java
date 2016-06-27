@@ -42,6 +42,7 @@ public class Variant {
     /**
      * Adds new variant
      * @param json {variantId}
+     * @return response code
      */
     //TODO check variant is correct: check ref/alt/pos etc
     @POST
@@ -79,7 +80,7 @@ public class Variant {
     }
 
     /**
-     * Returns variant and genomic annotations
+     * @return Returns variant and genomic annotations
      * @param json {variantId}
      */
     @POST
@@ -125,7 +126,7 @@ public class Variant {
     }
 
     /**
-     * Returns observations/counts of a variant
+     * @return Returns observations/counts of a variant
      * @param json {variantId}
      */
     @POST
@@ -207,7 +208,7 @@ public class Variant {
     }
 
     /**
-     * Returns all variant annotations
+     * @return Returns all variant annotations
      * @param json {variantId}
      */
     @POST
@@ -273,6 +274,7 @@ public class Variant {
     /**
      * Adds variant pathogenicity. class must be in range 1-5.
      * @param json {variantId,userId,classification,evidence}
+     * @return respsonse code
      */
     @POST
     @Path("/pathogenicity/add")

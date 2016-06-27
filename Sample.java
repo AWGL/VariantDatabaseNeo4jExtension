@@ -37,7 +37,7 @@ public class Sample {
     }
 
     /**
-     * Returns sample info
+     * @return Returns sample info
      * @param json {sampleId}
      */
     @POST

@@ -38,7 +38,7 @@ public class Dataset {
     }
 
     /**
-     * Returns all QC passing datasets
+     * @return Returns all QC passing datasets
      */
     @GET
     @Path("/info/passed")
@@ -114,7 +114,7 @@ public class Dataset {
     }
 
     /**
-     * Returns all datasets requiring QC
+     * @return Returns all datasets requiring QC
      */
     @GET
     @Path("/info/pending")
@@ -185,6 +185,7 @@ public class Dataset {
     /**
      * Adds QC node to dataset
      * @param json {sampleId, worklistId, seqId, email, passOrFail, evidence}
+     * @return response code
      */
     @POST
     @Path("/add/qc")

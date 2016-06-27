@@ -38,7 +38,7 @@ public class Symbol {
     }
 
     /**
-     * Returns symbol info
+     * @return Returns symbol info
      * @param json {symbolId}
      */
     @POST

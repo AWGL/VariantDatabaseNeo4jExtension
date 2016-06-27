@@ -40,7 +40,7 @@ public class Feature {
     }
 
     /**
-     * Returns info about a feature
+     * @return Returns info about a feature
      * @param json {featureId}
      */
     @POST
@@ -91,6 +91,7 @@ public class Feature {
     /**
      * Adds preference to feature
      * @param json {featureId, email, preference, evidence}
+     * @return response code
      */
     @POST
     @Path("preference/add")

@@ -39,7 +39,7 @@ public class Report {
     }
 
     /**
-     * Creates text report of selected variants and annotations
+     * @return Creates text report of selected variants and annotations
      * @param json {sampleId, worklistId, seqId, email, variant:[variant]}
      */
     @POST

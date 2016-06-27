@@ -45,7 +45,7 @@ public class Event {
     }
 
     /**
-     * Returns all event nodes requiring auth
+     * @return Returns all event nodes requiring auth
      * @param json {label}
      */
     @POST
@@ -126,6 +126,7 @@ public class Event {
     /**
      * Auth user event
      * @param json {eventNodeId, email, addOrRemove}
+     * @return response code
      */
     @POST
     @Path("/auth")

@@ -40,7 +40,7 @@ public class User {
     }
 
     /**
-     * Returns info about a user
+     * @return Returns info about a user
      * @param json {email}
      */
     @POST
@@ -88,6 +88,7 @@ public class User {
     /**
      * Overwrite user password
      * @param json {email, password}
+     * @return response code
      */
     @POST
     @Path("/update/password")
@@ -119,6 +120,7 @@ public class User {
     /**
      * Adds new user
      * @param json {email, fullName, password, admin}
+     * @return response code
      */
     @POST
     @Path("/add")

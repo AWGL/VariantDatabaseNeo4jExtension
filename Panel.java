@@ -38,7 +38,7 @@ public class Panel {
     }
 
     /**
-     * List all panels
+     * @return List all panels
      */
     @GET
     @Path("/info")
@@ -107,7 +107,7 @@ public class Panel {
     }
 
     /**
-     * Returns panel info
+     * @return Returns panel info
      * @param json {panelId}
      */
     @POST
@@ -180,6 +180,7 @@ public class Panel {
     /**
      * Adds new gene panel
      * @param json {email, list[symbolId], panelId}
+     * @return response code
      */
     @POST
     @Path("/add")

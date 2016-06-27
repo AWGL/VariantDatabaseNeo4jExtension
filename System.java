@@ -36,7 +36,7 @@ public class System {
     }
 
     /**
-     * Returns nodes with multiple releationships to the same node (which shouldnt exist)
+     * @return Returns nodes with multiple releationships to the same node (which shouldnt exist)
      */
     @GET
     @Path("/multiplerelationships")
@@ -85,7 +85,7 @@ public class System {
     }
 
     /**
-     * Returns request. For debugging
+     * @return Returns request. For debugging
      * @param req Request
      */
     @POST
@@ -107,6 +107,7 @@ public class System {
 
     /**
      * Loads all into cache
+     * @return response code
      * */
     @GET
     @Path("/warmup")
@@ -146,6 +147,7 @@ public class System {
 
     /**
      * Creates indexes for first load
+     * @return reponse code
      * */
     @GET
     @Path("/indexes")

@@ -37,7 +37,7 @@ public class Disorder {
     }
 
     /**
-     * Returns symbols associated with a disorder
+     * @return Returns symbols associated with a disorder
      * @param json {disorderId, symbols:[symbol]}
      */
     @POST
