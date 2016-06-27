@@ -53,8 +53,8 @@ public class Workflow {
     }
 
     /**
-     * POST {sampleId, worklistId, seqId} /variantdatabase/workflow/rare
      * Returns all variants stratified for rareness in varaint frequency populations
+     * @param json {sampleId, worklistId, seqId}
      */
     @POST
     @Path("/rare")
@@ -111,7 +111,6 @@ public class Workflow {
     }
 
     /**
-     * GET /variantdatabase/workflow/info
      * Returns info about available variant filter workflows
      */
     @GET

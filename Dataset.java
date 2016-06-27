@@ -38,7 +38,6 @@ public class Dataset {
     }
 
     /**
-     * GET /variantdatabase/dataset/info/passed
      * Returns all QC passing datasets
      */
     @GET
@@ -115,7 +114,6 @@ public class Dataset {
     }
 
     /**
-     * GET /variantdatabase/dataset/info/pending
      * Returns all datasets requiring QC
      */
     @GET
@@ -185,8 +183,8 @@ public class Dataset {
     }
 
     /**
-     * POST {sampleId, worklistId, seqId, email, passOrFail, evidence} /variantdatabase/dataset/add/qc
      * Adds QC node to dataset
+     * @param json {sampleId, worklistId, seqId, email, passOrFail, evidence}
      */
     @POST
     @Path("/add/qc")

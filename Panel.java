@@ -38,7 +38,6 @@ public class Panel {
     }
 
     /**
-     * GET /variantdatabase/panel/info
      * List all panels
      */
     @GET
@@ -108,8 +107,8 @@ public class Panel {
     }
 
     /**
-     * POST panel Id /variantdatabase/panel/info
      * Returns panel info
+     * @param json {panelId}
      */
     @POST
     @Path("/info")
@@ -179,8 +178,8 @@ public class Panel {
     }
 
     /**
-     * POST {email, list[symbolId], panelId} /variantdatabase/panel/add
      * Adds new gene panel
+     * @param json {email, list[symbolId], panelId}
      */
     @POST
     @Path("/add")

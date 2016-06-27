@@ -40,8 +40,8 @@ public class User {
     }
 
     /**
-     * POST {email} /variantdatabase/user/info
      * Returns info about a user
+     * @param json {email}
      */
     @POST
     @Path("/info")
@@ -86,8 +86,8 @@ public class User {
     }
 
     /**
-     * POST {email, password} /variantdatabase/user/update/password
      * Overwrite user password
+     * @param json {email, password}
      */
     @POST
     @Path("/update/password")
@@ -117,8 +117,8 @@ public class User {
     }
 
     /**
-     * POST {email, fullName, password, admin} /variantdatabase/user/add
      * Adds new user
+     * @param json {email, fullName, password, admin}
      */
     @POST
     @Path("/add")

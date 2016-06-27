@@ -45,8 +45,8 @@ public class Event {
     }
 
     /**
-     * POST {label} /variantdatabase/event/pending/auth
      * Returns all event nodes requiring auth
+     * @param json {label}
      */
     @POST
     @Path("pending/auth")
@@ -124,8 +124,8 @@ public class Event {
     }
 
     /**
-     * POST {eventNodeId, email, addOrRemove} /variantdatabase/event/auth
      * Auth user event
+     * @param json {eventNodeId, email, addOrRemove}
      */
     @POST
     @Path("/auth")

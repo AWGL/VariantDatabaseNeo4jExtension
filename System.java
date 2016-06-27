@@ -35,6 +35,9 @@ public class System {
         this.log = log;
     }
 
+    /**
+     * Returns nodes with multiple releationships to the same node (which shouldnt exist)
+     */
     @GET
     @Path("/multiplerelationships")
     @Produces(MediaType.APPLICATION_JSON)
@@ -81,6 +84,10 @@ public class System {
         }
     }
 
+    /**
+     * Returns request. For debugging
+     * @param req Request
+     */
     @POST
     @Path("/ret")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -98,6 +105,9 @@ public class System {
         }
     }
 
+    /**
+     * Loads all into cache
+     * */
     @GET
     @Path("/warmup")
     @Produces(MediaType.APPLICATION_JSON)
@@ -134,6 +144,9 @@ public class System {
         }
     }
 
+    /**
+     * Creates indexes for first load
+     * */
     @GET
     @Path("/indexes")
     @Produces(MediaType.APPLICATION_JSON)

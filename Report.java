@@ -38,6 +38,10 @@ public class Report {
         this.log = log;
     }
 
+    /**
+     * Creates text report of selected variants and annotations
+     * @param json {sampleId, worklistId, seqId, email, variant:[variant]}
+     */
     @POST
     @Path("/text")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -62,7 +66,7 @@ public class Report {
                     JsonNode jsonNode = objectMapper.readTree(json);
 
                     Node datasetNode = Framework.findDatasetNode(jsonNode.get("sampleId").asText(), jsonNode.get("worklistId").asText(), jsonNode.get("seqId").asText(), graphDb);
-                    Node userNode = graphDb.findNode(Labels.user, "userId", jsonNode.get("userId").asText());
+                    Node userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email").asText());
 
                     printWriter.println("hi\ttab\ttab\tnewline");
 

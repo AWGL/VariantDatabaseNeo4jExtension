@@ -37,8 +37,8 @@ public class Disorder {
     }
 
     /**
-     * POST /variantdatabase/disorder/info
      * Returns symbols associated with a disorder
+     * @param json {disorderId, symbols:[symbol]}
      */
     @POST
     @Path("/info")

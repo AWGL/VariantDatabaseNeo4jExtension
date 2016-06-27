@@ -40,8 +40,8 @@ public class Feature {
     }
 
     /**
-     * POST {featureId} /variantdatabase/feature/info
      * Returns info about a feature
+     * @param json {featureId}
      */
     @POST
     @Path("/info")
@@ -89,8 +89,8 @@ public class Feature {
     }
 
     /**
-     * POST {featureId, email, preference, evidence} /variantdatabase/feature/preference/add
      * Adds preference to feature
+     * @param json {featureId, email, preference, evidence}
      */
     @POST
     @Path("preference/add")

@@ -1,5 +1,6 @@
 package nhs.genetics.cardiff.variantdatabase.plugin;
 
+import nhs.genetics.cardiff.framework.GenomeVariant;
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
@@ -39,9 +40,10 @@ public class Variant {
     }
 
     /**
-     * POST {variantId} /variantdatabase/variant/add
-     * Adds new variant; must be in minimum representation
+     * Adds new variant
+     * @param json {variantId}
      */
+    //TODO check variant is correct: check ref/alt/pos etc
     @POST
     @Path("/add")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -51,13 +53,16 @@ public class Variant {
         try {
             JsonNode jsonNode = objectMapper.readTree(json);
 
+            GenomeVariant genomeVariant = new GenomeVariant(jsonNode.get("variantId").asText());
+            genomeVariant.convertToMinimalRepresentation();
+
             try (Transaction tx = graphDb.beginTx()) {
-                Node node = graphDb.findNode(Labels.variant, "variantId", jsonNode.get("variantId").asText());
+                Node node = graphDb.findNode(Labels.variant, "variantId", genomeVariant.toString());
 
                 if (node == null){
                     Node variantNode = graphDb.createNode(Labels.variant);
                     variantNode.addLabel(Labels.annotate); //add to annotation queue
-                    variantNode.setProperty("variantId", jsonNode.get("variantId").asText());
+                    variantNode.setProperty("variantId", genomeVariant.toString());
                 }
 
                 tx.success();
@@ -74,8 +79,8 @@ public class Variant {
     }
 
     /**
-     * POST {variantId} /variantdatabase/variant/info
      * Returns variant and genomic annotations
+     * @param json {variantId}
      */
     @POST
     @Path("/info")
@@ -120,8 +125,8 @@ public class Variant {
     }
 
     /**
-     * POST {variantId} to /variantdatabase/variant/observations
      * Returns observations/counts of a variant
+     * @param json {variantId}
      */
     @POST
     @Path("/observations")
@@ -202,8 +207,8 @@ public class Variant {
     }
 
     /**
-     * POST {variantId} /variantdatabase/variant/annotation
      * Returns all variant annotations
+     * @param json {variantId}
      */
     @POST
     @Path("/annotation")
@@ -266,8 +271,8 @@ public class Variant {
     }
 
     /**
-     * POST {variantId,userId,classification,evidence} to /variantdatabase/add/pathogenicity
      * Adds variant pathogenicity. class must be in range 1-5.
+     * @param json {variantId,userId,classification,evidence}
      */
     @POST
     @Path("/pathogenicity/add")

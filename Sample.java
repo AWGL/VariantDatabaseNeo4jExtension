@@ -37,8 +37,8 @@ public class Sample {
     }
 
     /**
-     * POST {sampleId} /variantdatabase/sample/info
      * Returns sample info
+     * @param json {sampleId}
      */
     @POST
     @Path("/info")
