@@ -43,7 +43,7 @@ public class Workflow {
     }
 
     /**
-     * Workflow annotation for database
+     * Workflow annotation for database endpoints
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)

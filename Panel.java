@@ -60,9 +60,7 @@ public class Panel {
 
                             while (panelNodes.hasNext()) {
                                 Node panelNode = panelNodes.next();
-
-                                Relationship designedByRelationship = panelNode.getSingleRelationship(Relationships.designedBy, Direction.OUTGOING);
-                                Node userNode = designedByRelationship.getEndNode();
+                                Relationship addedByRelationship = panelNode.getSingleRelationship(Relationships.addedBy, Direction.OUTGOING);
 
                                 jg.writeStartObject();
 
@@ -70,13 +68,8 @@ public class Panel {
                                 Framework.writeNodeProperties(panelNode.getId(), panelNode.getAllProperties(), panelNode.getLabels(), jg);
                                 jg.writeEndObject();
 
-                                jg.writeFieldName("designedBy");
-                                Framework.writeRelationshipProperties(designedByRelationship.getId(), designedByRelationship.getAllProperties(), designedByRelationship.getType().name(), jg);
-                                jg.writeEndObject();
-
-                                jg.writeFieldName("user");
-                                Framework.writeNodeProperties(userNode.getId(), userNode.getAllProperties(), userNode.getLabels(), jg);
-                                jg.writeEndObject();
+                                Node addedByUserNode = addedByRelationship.getEndNode();
+                                Event.writeAddedBy(addedByUserNode.getId(), addedByUserNode.getProperties("fullName", "email", "admin"), addedByUserNode.getLabels(), (long) addedByRelationship.getProperty("date"), jg);
 
                                 jg.writeEndObject();
 
@@ -130,20 +123,14 @@ public class Panel {
                     try (Transaction tx = graphDb.beginTx()) {
                         Node panelNode = graphDb.findNode(Labels.panel, "panelId", jsonNode.get("panelId").asText());
 
-                        Relationship designedByRelationship = panelNode.getSingleRelationship(Relationships.designedBy, Direction.OUTGOING);
-                        Node userNode = designedByRelationship.getEndNode();
+                        Relationship addedByRelationship = panelNode.getSingleRelationship(Relationships.addedBy, Direction.OUTGOING);
 
                         jg.writeFieldName("panel");
                         Framework.writeNodeProperties(panelNode.getId(), panelNode.getAllProperties(), panelNode.getLabels(), jg);
                         jg.writeEndObject();
 
-                        jg.writeFieldName("designedBy");
-                        Framework.writeRelationshipProperties(designedByRelationship.getId(), designedByRelationship.getAllProperties(), designedByRelationship.getType().name(), jg);
-                        jg.writeEndObject();
-
-                        jg.writeFieldName("user");
-                        Framework.writeNodeProperties(userNode.getId(), userNode.getAllProperties(), userNode.getLabels(), jg);
-                        jg.writeEndObject();
+                        Node addedByUserNode = addedByRelationship.getEndNode();
+                        Event.writeAddedBy(addedByUserNode.getId(), addedByUserNode.getProperties("fullName", "email", "admin"), addedByUserNode.getLabels(), (long) addedByRelationship.getProperty("date"), jg);
 
                         jg.writeArrayFieldStart("symbols");
 
@@ -200,7 +187,7 @@ public class Panel {
                 panelNode.setProperty("panelId", jsonNode.get("panelId").asText());
 
                 //link to user
-                Relationship designedByRelationship = panelNode.createRelationshipTo(userNode, Relationships.designedBy);
+                Relationship designedByRelationship = panelNode.createRelationshipTo(userNode, Relationships.addedBy);
                 designedByRelationship.setProperty("date", new Date().getTime());
 
                 //link to genes

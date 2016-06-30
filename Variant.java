@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Date;
-import java.util.HashMap;
 
 /**
  * A class for working with variants
@@ -39,22 +38,26 @@ public class Variant {
         this.log = log;
     }
 
+    private static final class Properties {
+        private static final String variantId = "variantId";
+    }
+
     /**
      * Adds new variant
      * @param json {variantId}
      * @return response code
      */
-    //TODO check variant is correct: check ref/alt/pos etc
     @POST
     @Path("/add")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response add(final String json){
+        //TODO check variant is correct: check ref/alt/pos etc
 
         try {
             JsonNode jsonNode = objectMapper.readTree(json);
 
-            GenomeVariant genomeVariant = new GenomeVariant(jsonNode.get("variantId").asText());
+            GenomeVariant genomeVariant = new GenomeVariant(jsonNode.get(Properties.variantId).asText());
             genomeVariant.convertToMinimalRepresentation();
 
             try (Transaction tx = graphDb.beginTx()) {
@@ -235,8 +238,9 @@ public class Variant {
                             Node featureNode = relationship.getEndNode();
                             Node symbolNode = featureNode.getSingleRelationship(Relationships.hasFeature, Direction.INCOMING).getStartNode();
 
-                            jg.writeStartObject();
+                            jg.writeObjectFieldStart("annotation");
                             Framework.writeRelationshipProperties(relationship.getId(), relationship.getAllProperties(), relationship.getType().name(), jg);
+                            jg.writeEndObject();
 
                             jg.writeObjectFieldStart("feature");
                             Framework.writeNodeProperties(featureNode.getId(), featureNode.getAllProperties(), featureNode.getLabels(), jg);
@@ -336,6 +340,79 @@ public class Variant {
                     .status(Response.Status.BAD_REQUEST)
                     .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .build();
+        }
+
+    }
+
+    /**
+     * @return Returns all variants with pending pathogenicity requiring auth
+     */
+    @GET
+    @Path("/pathogenicity/pending/auth")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getPathogenicityPendingAuth() {
+
+        try {
+
+            StreamingOutput stream = new StreamingOutput() {
+
+                @Override
+                public void write(OutputStream os) throws IOException, WebApplicationException {
+
+                    JsonGenerator jg = objectMapper.getJsonFactory().createJsonGenerator(os, JsonEncoding.UTF8);
+
+                    jg.writeStartArray();
+
+                    try (Transaction tx = graphDb.beginTx()) {
+                        try (ResourceIterator<Node> iter = graphDb.findNodes(Labels.pathogenicity)){
+
+                            while (iter.hasNext()) {
+                                Node pathogenicityNode = iter.next();
+
+                                if (Event.getUserEventStatus(pathogenicityNode, graphDb) == Event.UserEventStatus.PENDING_AUTH){
+
+                                    Relationship addedByRelationship = pathogenicityNode.getSingleRelationship(Relationships.addedBy, Direction.OUTGOING);
+
+                                    jg.writeStartObject();
+
+                                    Node variantNode = Event.getSubjectNodeFromEventNode(pathogenicityNode, graphDb);
+                                    jg.writeObjectFieldStart("variant");
+                                    Framework.writeNodeProperties(variantNode.getId(), variantNode.getAllProperties(), variantNode.getLabels(), jg);
+                                    jg.writeEndObject();
+
+                                    jg.writeObjectFieldStart("pathogenicity");
+                                    Framework.writeNodeProperties(pathogenicityNode.getId(), pathogenicityNode.getAllProperties(), pathogenicityNode.getLabels(), jg);
+                                    jg.writeEndObject();
+
+                                    Node addedByUserNode = addedByRelationship.getEndNode();
+                                    Event.writeAddedBy(addedByUserNode.getId(), addedByUserNode.getProperties("fullName", "email", "admin"), addedByUserNode.getLabels(), (long) addedByRelationship.getProperty("date"), jg);
+
+                                    jg.writeEndObject();
+
+                                }
+
+                            }
+
+                        }
+                    }
+
+                    jg.writeEndArray();
+
+                    jg.flush();
+                    jg.close();
+
+                }
+
+            };
+
+            return Response.ok().entity(stream).type(MediaType.APPLICATION_JSON).build();
+
         } catch (Exception e) {
             log.error(e.getMessage());
             return Response

@@ -9,7 +9,6 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.logging.Log;
-import scala.collection.immutable.Nil;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -19,6 +18,7 @@ import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.Map;
 
 /**
  * A class for working with users
@@ -153,22 +153,18 @@ public class User {
 
     }
 
-    static void writeLiteUserRecord(final long id, final Iterable<Label> labels, final String fullName, final String email, final boolean admin, JsonGenerator jg) throws IOException {
+    static void writeLiteUserRecord(final long id, final Iterable<Label> labels, final Map<String, Object> properties, JsonGenerator jg) throws IOException {
         jg.writeNumberField("id", id);
-        jg.writeStringField("fullName", fullName);
-        jg.writeStringField("email", email);
-        jg.writeBooleanField("admin", admin);
+
+        jg.writeObjectFieldStart("properties");
+        jg.writeObject(properties);
+        jg.writeEndObject();
 
         jg.writeArrayFieldStart("labels");
         for (Label label : labels){
             jg.writeString(label.name());
         }
         jg.writeEndArray();
-    }
-    static Node getUserNode(String email, GraphDatabaseService graphDb){
-        try (Transaction tx = graphDb.beginTx()) {
-            return graphDb.findNode(Labels.user, "email", email);
-        }
     }
 
 }

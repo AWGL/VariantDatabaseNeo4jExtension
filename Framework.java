@@ -26,12 +26,10 @@ class Framework {
         jg.writeEndArray();
 
     }
-    static void writeRelationshipProperties(final Long id, final Map<String, Object> properties, final String relationshipTypeName, final JsonGenerator jg) throws IOException {
-
+    static void writeRelationshipProperties(final Long id, final Map<String, Object> properties, final String name, final JsonGenerator jg) throws IOException {
         jg.writeNumberField("id", id);
         jg.writeObjectField("properties", properties);
-        jg.writeStringField("type", relationshipTypeName);
-
+        jg.writeStringField("type", name);
     }
     static Node matchOrCreateUniqueNode(GraphDatabaseService graphDb, Label label, String field, Object value) {
         Node node = null;

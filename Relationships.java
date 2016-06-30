@@ -15,7 +15,6 @@ class Relationships {
     static final RelationshipType addedBy = RelationshipType.withName("ADDED_BY");
     static final RelationshipType authorisedBy = RelationshipType.withName("AUTHORISED_BY");
     static final RelationshipType rejectedBy = RelationshipType.withName("REJECTED_BY");
-    static final RelationshipType designedBy = RelationshipType.withName("DESIGNED_BY");
     static final RelationshipType containsSymbol = RelationshipType.withName("CONTAINS_SYMBOL");
     static final RelationshipType hasHetVariant = RelationshipType.withName("HAS_HET_VARIANT");
     static final RelationshipType hasHomVariant = RelationshipType.withName("HAS_HOM_VARIANT");

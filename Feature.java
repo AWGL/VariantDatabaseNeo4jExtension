@@ -6,7 +6,6 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.neo4j.graphdb.*;
 import org.neo4j.logging.Log;
-import org.neo4j.server.rest.web.NodeNotFoundException;
 
 import javax.ws.rs.*;
 import javax.ws.rs.Path;
@@ -18,7 +17,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Date;
-import java.util.HashMap;
 
 /**
  * A class for working with features
@@ -165,5 +163,76 @@ public class Feature {
 
     }
 
+    /**
+     * @return Returns all variants with pending pathogenicity requiring auth
+     */
+    @GET
+    @Path("/preference/pending/auth")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getFeaturePreferencePendingAuth() {
 
+        try {
+
+            StreamingOutput stream = new StreamingOutput() {
+
+                @Override
+                public void write(OutputStream os) throws IOException, WebApplicationException {
+
+                    JsonGenerator jg = objectMapper.getJsonFactory().createJsonGenerator(os, JsonEncoding.UTF8);
+
+                    jg.writeStartArray();
+
+                    try (Transaction tx = graphDb.beginTx()) {
+                        try (ResourceIterator<Node> iter = graphDb.findNodes(Labels.featurePreference)){
+
+                            while (iter.hasNext()) {
+                                Node featurePreferenceNode = iter.next();
+
+                                if (Event.getUserEventStatus(featurePreferenceNode, graphDb) == Event.UserEventStatus.PENDING_AUTH){
+
+                                    Relationship addedByRelationship = featurePreferenceNode.getSingleRelationship(Relationships.addedBy, Direction.OUTGOING);
+
+                                    jg.writeStartObject();
+
+                                    Node featureNode = Event.getSubjectNodeFromEventNode(featurePreferenceNode, graphDb);
+                                    jg.writeObjectFieldStart("feature");
+                                    Framework.writeNodeProperties(featureNode.getId(), featureNode.getAllProperties(), featureNode.getLabels(), jg);
+                                    jg.writeEndObject();
+
+                                    jg.writeObjectFieldStart("featurePreference");
+                                    Framework.writeNodeProperties(featurePreferenceNode.getId(), featurePreferenceNode.getAllProperties(), featurePreferenceNode.getLabels(), jg);
+                                    jg.writeEndObject();
+
+                                    Node addedByUserNode = addedByRelationship.getEndNode();
+                                    Event.writeAddedBy(addedByUserNode.getId(), addedByUserNode.getProperties("fullName", "email", "admin"), addedByUserNode.getLabels(), (long) addedByRelationship.getProperty("date"), jg);
+
+                                    jg.writeEndObject();
+
+                                }
+
+                            }
+
+                        }
+                    }
+
+                    jg.writeEndArray();
+
+                    jg.flush();
+                    jg.close();
+
+                }
+
+            };
+
+            return Response.ok().entity(stream).type(MediaType.APPLICATION_JSON).build();
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .build();
+        }
+
+    }
 }

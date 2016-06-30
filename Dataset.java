@@ -15,6 +15,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.*;
 import java.nio.charset.Charset;
 import java.util.Date;
 
@@ -41,7 +42,7 @@ public class Dataset {
      * @return Returns all QC passing datasets
      */
     @GET
-    @Path("/info/passed")
+    @Path("/qc/passed")
     @Produces(MediaType.APPLICATION_JSON)
     public Response passed() {
 
@@ -117,7 +118,7 @@ public class Dataset {
      * @return Returns all datasets requiring QC
      */
     @GET
-    @Path("/info/pending")
+    @Path("/qc/pending")
     @Produces(MediaType.APPLICATION_JSON)
     public Response pending() {
 
@@ -188,7 +189,7 @@ public class Dataset {
      * @return response code
      */
     @POST
-    @Path("/add/qc")
+    @Path("/qc/add")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response addQc(final String json) {
@@ -197,7 +198,6 @@ public class Dataset {
 
             JsonNode jsonNode = objectMapper.readTree(json);
 
-            Node userNode = User.getUserNode(jsonNode.get("email").asText(), graphDb);
             Node datasetNode = Framework.findDatasetNode(jsonNode.get("sampleId").asText(), jsonNode.get("worklistId").asText(), jsonNode.get("seqId").asText(), graphDb);
 
             //check dataset does not already have outstanding auths
@@ -215,6 +215,7 @@ public class Dataset {
             //add event
             try (Transaction tx = graphDb.beginTx()) {
                 Node newEventNode = graphDb.createNode(Labels.qualityControl);
+                Node userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email").asText());
 
                 //add properties
                 newEventNode.setProperty("passOrFail", jsonNode.get("passOrFail").asBoolean());
@@ -241,6 +242,84 @@ public class Dataset {
                     .status(Response.Status.BAD_REQUEST)
                     .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .build();
+        }
+
+    }
+
+    /**
+     * @return Returns all datasets with pending QC requiring auth
+     */
+    @GET
+    @Path("/qc/pending/auth")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response eventPendingAuth() {
+
+        try {
+
+            StreamingOutput stream = new StreamingOutput() {
+
+                @Override
+                public void write(OutputStream os) throws IOException, WebApplicationException {
+
+                    JsonGenerator jg = objectMapper.getJsonFactory().createJsonGenerator(os, JsonEncoding.UTF8);
+
+                    jg.writeStartArray();
+
+                    try (Transaction tx = graphDb.beginTx()) {
+                        try (ResourceIterator<Node> iter = graphDb.findNodes(Labels.qualityControl)){
+
+                            while (iter.hasNext()) {
+                                Node qcNode = iter.next();
+
+                                if (Event.getUserEventStatus(qcNode, graphDb) == Event.UserEventStatus.PENDING_AUTH){
+
+                                    Relationship addedByRelationship = qcNode.getSingleRelationship(Relationships.addedBy, Direction.OUTGOING);
+
+                                    jg.writeStartObject();
+
+                                    Node datasetNode = Event.getSubjectNodeFromEventNode(qcNode, graphDb);
+                                    jg.writeObjectFieldStart("dataset");
+                                    Framework.writeNodeProperties(datasetNode.getId(), datasetNode.getAllProperties(), datasetNode.getLabels(), jg);
+                                    jg.writeEndObject();
+
+                                    Node sampleNode = datasetNode.getSingleRelationship(Relationships.hasData, Direction.INCOMING).getStartNode();
+                                    jg.writeObjectFieldStart("sample");
+                                    Framework.writeNodeProperties(sampleNode.getId(), sampleNode.getAllProperties(), sampleNode.getLabels(), jg);
+                                    jg.writeEndObject();
+
+                                    jg.writeObjectFieldStart("qc");
+                                    Framework.writeNodeProperties(qcNode.getId(), qcNode.getAllProperties(), qcNode.getLabels(), jg);
+                                    jg.writeEndObject();
+
+                                    Node addedByUserNode = addedByRelationship.getEndNode();
+                                    Event.writeAddedBy(addedByUserNode.getId(), addedByUserNode.getProperties("fullName", "email", "admin"), addedByUserNode.getLabels(), (long) addedByRelationship.getProperty("date"), jg);
+
+                                    jg.writeEndObject();
+
+                                }
+
+                            }
+
+                        }
+                    }
+
+                    jg.writeEndArray();
+
+                    jg.flush();
+                    jg.close();
+
+                }
+
+            };
+
+            return Response.ok().entity(stream).type(MediaType.APPLICATION_JSON).build();
+
         } catch (Exception e) {
             log.error(e.getMessage());
             return Response
