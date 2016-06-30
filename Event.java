@@ -49,7 +49,7 @@ public class Event {
      * @param json {label}
      */
     @POST
-    @Path("pending/auth")
+    @Path("/pending/auth")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response eventPendingAuth(final String json) {

@@ -149,7 +149,7 @@ public class Dataset {
                                     Framework.writeNodeProperties(sampleNode.getId(), sampleNode.getAllProperties(), sampleNode.getLabels(), jg);
                                     jg.writeEndObject();
 
-                                    jg.writeObjectFieldStart("datset");
+                                    jg.writeObjectFieldStart("dataset");
                                     Framework.writeNodeProperties(datasetNode.getId(), datasetNode.getAllProperties(), datasetNode.getLabels(), jg);
                                     jg.writeEndObject();
 
