@@ -94,6 +94,7 @@ public class Event {
 
     }
 
+    //TODO
     static void writeEventHistory(Node subjectNode, JsonGenerator jg, GraphDatabaseService graphDb) throws IOException {
         org.neo4j.graphdb.Path longestPath = null;
 
@@ -120,14 +121,12 @@ public class Event {
                 Relationship authorisedByRelationship = eventNode.getSingleRelationship(Relationships.authorisedBy, Direction.OUTGOING);
                 Relationship rejectedByRelationship = eventNode.getSingleRelationship(Relationships.rejectedBy, Direction.OUTGOING);
 
-                //event info
+                //event info TODO add obj
                 Framework.writeNodeProperties(eventNode.getId(), eventNode.getAllProperties(), eventNode.getLabels(), jg);
 
-                jg.writeObjectFieldStart("add");
+                //write added by
                 Node addedByNode = addedByRelationship.getEndNode();
-                User.writeLiteUserRecord(addedByNode.getId(), addedByNode.getLabels(), addedByNode.getProperties("fullName", "email", "admin"), jg);
-                jg.writeNumberField("date",(long) addedByRelationship.getProperty("date"));
-                jg.writeEndObject();
+                writeAddedBy(addedByNode.getId(), addedByNode.getProperties("fullName", "email", "admin"), addedByNode.getLabels(), (long) addedByRelationship.getProperty("date"), jg);
 
                 if (authorisedByRelationship == null && rejectedByRelationship == null){
                     jg.writeStringField("status", UserEventStatus.PENDING_AUTH.toString());
@@ -136,23 +135,15 @@ public class Event {
                 if (authorisedByRelationship != null && rejectedByRelationship == null){
                     jg.writeStringField("status", UserEventStatus.ACTIVE.toString());
 
-                    jg.writeObjectFieldStart("auth");
                     Node authorisedByNode = authorisedByRelationship.getEndNode();
-                    User.writeLiteUserRecord(authorisedByNode.getId(), authorisedByNode.getLabels(), authorisedByNode.getProperties("fullName", "email", "admin"), jg);
-                    jg.writeNumberField("date",(long) authorisedByRelationship.getProperty("date"));
-                    jg.writeEndObject();
-
+                    writeAuthBy(authorisedByNode.getId(), authorisedByNode.getProperties("fullName", "email", "admin"), authorisedByNode.getLabels(), (long) authorisedByRelationship.getProperty("date"), jg);
                 }
 
                 if (authorisedByRelationship == null && rejectedByRelationship != null){
                     jg.writeStringField("status", UserEventStatus.REJECTED.toString());
 
-                    jg.writeObjectFieldStart("auth");
                     Node rejectedByNode = rejectedByRelationship.getEndNode();
-                    User.writeLiteUserRecord(rejectedByNode.getId(), rejectedByNode.getLabels(), rejectedByNode.getProperties("fullName", "email", "admin"), jg);
-                    jg.writeNumberField("date",(long) rejectedByRelationship.getProperty("date"));
-                    jg.writeEndObject();
-
+                    writeAuthBy(rejectedByNode.getId(), rejectedByNode.getProperties("fullName", "email", "admin"), rejectedByNode.getLabels(), (long) rejectedByNode.getProperty("date"), jg);
                 }
 
                 jg.writeEndObject();
@@ -247,10 +238,9 @@ public class Event {
     }
 
     static UserEventStatus getUserEventStatus(Node eventNode, GraphDatabaseService graphDb) {
-        Relationship addedbyRelationship, authorisedByRelationship, rejectedByRelationship;
+        Relationship authorisedByRelationship, rejectedByRelationship;
 
         try (Transaction tx = graphDb.beginTx()) {
-            addedbyRelationship = eventNode.getSingleRelationship(Relationships.addedBy, Direction.OUTGOING);
             authorisedByRelationship = eventNode.getSingleRelationship(Relationships.authorisedBy, Direction.OUTGOING);
             rejectedByRelationship = eventNode.getSingleRelationship(Relationships.rejectedBy, Direction.OUTGOING);
         }
@@ -270,14 +260,25 @@ public class Event {
         return null;
     }
 
-    static void writeAddedBy(final Long id, final Map<String, Object> properties, final Iterable<Label> labels, long date, final JsonGenerator jg) throws IOException {
-        jg.writeObjectFieldStart("added");
+    static void writeAddedBy(final Long userNodeId, final Map<String, Object> userNodeProperties, final Iterable<Label> userNodeLabels, long date, final JsonGenerator jg) throws IOException {
+        jg.writeObjectFieldStart("adder");
 
         jg.writeObjectFieldStart("user");
-        User.writeLiteUserRecord(id, labels, properties, jg);
+        User.writeLiteUserRecord(userNodeId, userNodeLabels, userNodeProperties, jg);
         jg.writeEndObject();
 
         jg.writeNumberField("date",date);
         jg.writeEndObject();
     }
+    static void writeAuthBy(final Long userNodeId, final Map<String, Object> userNodeProperties, final Iterable<Label> userNodeLabels, long date, final JsonGenerator jg) throws IOException {
+        jg.writeObjectFieldStart("authoriser");
+
+        jg.writeObjectFieldStart("user");
+        User.writeLiteUserRecord(userNodeId, userNodeLabels, userNodeProperties, jg);
+        jg.writeEndObject();
+
+        jg.writeNumberField("date",date);
+        jg.writeEndObject();
+    }
+
 }

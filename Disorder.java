@@ -60,7 +60,10 @@ public class Disorder {
 
                     try (Transaction tx = graphDb.beginTx()) {
                         Node node = graphDb.findNode(Labels.feature, "disorderId", jsonNode.get("disorderId").asText());
+
+                        jg.writeObjectFieldStart("disorder");
                         Framework.writeNodeProperties(node.getId(), node.getAllProperties(), node.getLabels(), jg);
+                        jg.writeEndObject();
 
                         jg.writeArrayFieldStart("symbols");
 

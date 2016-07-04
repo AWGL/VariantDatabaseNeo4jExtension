@@ -197,7 +197,6 @@ public class Dataset {
         try {
 
             JsonNode jsonNode = objectMapper.readTree(json);
-
             Node datasetNode = Framework.findDatasetNode(jsonNode.get("sampleId").asText(), jsonNode.get("worklistId").asText(), jsonNode.get("seqId").asText(), graphDb);
 
             //check dataset does not already have outstanding auths
