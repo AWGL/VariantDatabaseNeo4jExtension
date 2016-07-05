@@ -105,7 +105,10 @@ public class Variant {
 
                     try (Transaction tx = graphDb.beginTx()) {
                         Node variantNode = graphDb.findNode(Labels.variant, "variantId", jsonNode.get("variantId").asText());
+
+                        jg.writeObjectFieldStart("variant");
                         Framework.writeNodeProperties(variantNode.getId(), variantNode.getAllProperties(), variantNode.getLabels(), jg);
+                        jg.writeEndObject();
                     }
 
                     jg.writeEndObject();
@@ -172,14 +175,13 @@ public class Variant {
                                 if (sampleNode.hasLabel(Labels.sample)){
                                     jg.writeStartObject();
 
-
                                     jg.writeStringField("inheritance", Relationships.getVariantInheritance(inheritanceRel.getType().name()));
 
                                     jg.writeObjectFieldStart("sample");
                                     Framework.writeNodeProperties(sampleNode.getId(), sampleNode.getAllProperties(), sampleNode.getLabels(), jg);
                                     jg.writeEndObject();
 
-                                    jg.writeObjectFieldStart("datasets");
+                                    jg.writeObjectFieldStart("dataset");
                                     Framework.writeNodeProperties(datasetNode.getId(), datasetNode.getAllProperties(), datasetNode.getLabels(), jg);
                                     jg.writeEndObject();
 
@@ -284,7 +286,7 @@ public class Variant {
     @Path("/pathogenicity/add")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addPathogenicity(final String json) {
+    public Response pathogenicityAdd(final String json) {
 
         try {
 

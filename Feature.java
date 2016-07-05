@@ -62,7 +62,10 @@ public class Feature {
                     try (Transaction tx = graphDb.beginTx()) {
                         Node node = graphDb.findNode(Labels.feature, "featureId", jsonNode.get("featureId").asText());
 
+                        jg.writeObjectFieldStart("feature");
                         Framework.writeNodeProperties(node.getId(), node.getAllProperties(), node.getLabels(), jg);
+                        jg.writeEndObject();
+
                         Event.writeEventHistory(node, jg, graphDb);
                     }
 
@@ -169,7 +172,7 @@ public class Feature {
     @GET
     @Path("/preference/pending/auth")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getFeaturePreferencePendingAuth() {
+    public Response getPreferencePendingAuth() {
 
         try {
 

@@ -64,7 +64,10 @@ public class User {
 
                     try (Transaction tx = graphDb.beginTx()) {
                         Node userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email").asText().toLowerCase());
+
+                        jg.writeObjectFieldStart("user");
                         Framework.writeNodeProperties(userNode.getId(), userNode.getAllProperties(), userNode.getLabels(), jg);
+                        jg.writeEndObject();
                     }
 
                     jg.writeEndObject();

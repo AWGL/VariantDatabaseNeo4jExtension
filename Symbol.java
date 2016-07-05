@@ -59,7 +59,10 @@ public class Symbol {
 
                     try (Transaction tx = graphDb.beginTx()) {
                         Node symbolNode = graphDb.findNode(Labels.sample, "symbolId", jsonNode.get("symbolId").asText());
+
+                        jg.writeObjectFieldStart("symbol");
                         Framework.writeNodeProperties(symbolNode.getId(), symbolNode.getAllProperties(),symbolNode.getLabels(),jg);
+                        jg.writeEndObject();
                     }
 
                     jg.writeEndObject();

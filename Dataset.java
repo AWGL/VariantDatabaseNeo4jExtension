@@ -44,7 +44,7 @@ public class Dataset {
     @GET
     @Path("/qc/passed")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response passed() {
+    public Response getQcPassed() {
 
         try {
 
@@ -79,9 +79,7 @@ public class Dataset {
                                         jg.writeEndObject();
 
                                         //write dataset
-                                        jg.writeArrayFieldStart("datasets");
-
-                                        jg.writeStartObject();
+                                        jg.writeObjectFieldStart("dataset");
                                         Framework.writeNodeProperties(datasetNode.getId(), datasetNode.getAllProperties(), datasetNode.getLabels(), jg);
                                         jg.writeEndObject();
 
@@ -120,7 +118,7 @@ public class Dataset {
     @GET
     @Path("/qc/pending")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response pending() {
+    public Response getQcPending() {
 
         try {
 
@@ -192,7 +190,7 @@ public class Dataset {
     @Path("/qc/add")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addQc(final String json) {
+    public Response qcAdd(final String json) {
 
         try {
 
@@ -257,7 +255,7 @@ public class Dataset {
     @GET
     @Path("/qc/pending/auth")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response eventPendingAuth() {
+    public Response getQcPendingAuth() {
 
         try {
 

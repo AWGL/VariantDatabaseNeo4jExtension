@@ -166,7 +166,7 @@ public class Panel {
 
     /**
      * Adds new gene panel
-     * @param json {email, list[symbolId], panelId}
+     * @param json {email, symbols[symbolId], panelId}
      * @return response code
      */
     @POST

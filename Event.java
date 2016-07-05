@@ -94,7 +94,6 @@ public class Event {
 
     }
 
-    //TODO
     static void writeEventHistory(Node subjectNode, JsonGenerator jg, GraphDatabaseService graphDb) throws IOException {
         org.neo4j.graphdb.Path longestPath = null;
 
@@ -115,36 +114,41 @@ public class Event {
             for (Node eventNode : longestPath.nodes()) {
                 if (eventNode.getId() == subjectNode.getId()) continue;
 
+                UserEventStatus userEventStatus = null;
+
                 jg.writeStartObject();
 
                 Relationship addedByRelationship = eventNode.getSingleRelationship(Relationships.addedBy, Direction.OUTGOING);
                 Relationship authorisedByRelationship = eventNode.getSingleRelationship(Relationships.authorisedBy, Direction.OUTGOING);
                 Relationship rejectedByRelationship = eventNode.getSingleRelationship(Relationships.rejectedBy, Direction.OUTGOING);
 
-                //event info TODO add obj
-                Framework.writeNodeProperties(eventNode.getId(), eventNode.getAllProperties(), eventNode.getLabels(), jg);
-
                 //write added by
                 Node addedByNode = addedByRelationship.getEndNode();
                 writeAddedBy(addedByNode.getId(), addedByNode.getProperties("fullName", "email", "admin"), addedByNode.getLabels(), (long) addedByRelationship.getProperty("date"), jg);
 
                 if (authorisedByRelationship == null && rejectedByRelationship == null){
-                    jg.writeStringField("status", UserEventStatus.PENDING_AUTH.toString());
+                    userEventStatus = UserEventStatus.PENDING_AUTH;
                 }
 
                 if (authorisedByRelationship != null && rejectedByRelationship == null){
-                    jg.writeStringField("status", UserEventStatus.ACTIVE.toString());
+                    userEventStatus = UserEventStatus.ACTIVE;
 
                     Node authorisedByNode = authorisedByRelationship.getEndNode();
                     writeAuthBy(authorisedByNode.getId(), authorisedByNode.getProperties("fullName", "email", "admin"), authorisedByNode.getLabels(), (long) authorisedByRelationship.getProperty("date"), jg);
                 }
 
                 if (authorisedByRelationship == null && rejectedByRelationship != null){
-                    jg.writeStringField("status", UserEventStatus.REJECTED.toString());
+                    userEventStatus = UserEventStatus.REJECTED;
 
                     Node rejectedByNode = rejectedByRelationship.getEndNode();
                     writeAuthBy(rejectedByNode.getId(), rejectedByNode.getProperties("fullName", "email", "admin"), rejectedByNode.getLabels(), (long) rejectedByNode.getProperty("date"), jg);
                 }
+
+                //event info
+                jg.writeObjectFieldStart("event");
+                jg.writeStringField("status", userEventStatus.name());
+                Framework.writeNodeProperties(eventNode.getId(), eventNode.getAllProperties(), eventNode.getLabels(), jg);
+                jg.writeEndObject();
 
                 jg.writeEndObject();
 

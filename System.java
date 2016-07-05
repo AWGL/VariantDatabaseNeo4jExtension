@@ -36,10 +36,10 @@ public class System {
     }
 
     /**
-     * @return Returns nodes with multiple releationships to the same node (which shouldnt exist)
+     * @return Returns nodes with multiple relationships to the same node (which violates model)
      */
     @GET
-    @Path("/multiplerelationships")
+    @Path("/multiple/relationships")
     @Produces(MediaType.APPLICATION_JSON)
     public Response diagnosticNodesMultipleRelationships() {
         try {

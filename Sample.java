@@ -58,7 +58,10 @@ public class Sample {
 
                     try (Transaction tx = graphDb.beginTx()) {
                         Node sampleNode = graphDb.findNode(Labels.sample, "sampleId", jsonNode.get("sampleId").asText());
+
+                        jg.writeObjectFieldStart("sample");
                         Framework.writeNodeProperties(sampleNode.getId(), sampleNode.getAllProperties(), sampleNode.getLabels(), jg);
+                        jg.writeEndObject();
                     }
 
                     jg.writeEndObject();
