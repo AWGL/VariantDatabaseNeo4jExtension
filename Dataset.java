@@ -144,6 +144,7 @@ public class Dataset {
                                     jg.writeStartObject();
 
                                     Node sampleNode = datasetNode.getSingleRelationship(Relationships.hasData, Direction.INCOMING).getStartNode();
+
                                     jg.writeObjectFieldStart("sample");
                                     Framework.writeNodeProperties(sampleNode.getId(), sampleNode.getAllProperties(), sampleNode.getLabels(), jg);
                                     jg.writeEndObject();
@@ -281,11 +282,13 @@ public class Dataset {
                                     jg.writeStartObject();
 
                                     Node datasetNode = Event.getSubjectNodeFromEventNode(qcNode, graphDb);
+
                                     jg.writeObjectFieldStart("dataset");
                                     Framework.writeNodeProperties(datasetNode.getId(), datasetNode.getAllProperties(), datasetNode.getLabels(), jg);
                                     jg.writeEndObject();
 
                                     Node sampleNode = datasetNode.getSingleRelationship(Relationships.hasData, Direction.INCOMING).getStartNode();
+
                                     jg.writeObjectFieldStart("sample");
                                     Framework.writeNodeProperties(sampleNode.getId(), sampleNode.getAllProperties(), sampleNode.getLabels(), jg);
                                     jg.writeEndObject();
