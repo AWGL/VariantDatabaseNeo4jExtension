@@ -25,7 +25,6 @@ import java.util.Map;
  * @version 1.0
  * @since   2016-04-16
  */
-
 @Path("/variantdatabase/event")
 public class Event {
 
@@ -59,6 +58,7 @@ public class Event {
             Node eventNode, userNode;
 
             try (Transaction tx = graphDb.beginTx()) {
+
                 eventNode = graphDb.getNodeById(jsonNode.get("eventNodeId").asLong());
                 userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email").asText());
 
@@ -74,9 +74,7 @@ public class Event {
 
             authUserEvent(eventNode, userNode, jsonNode.get("addOrRemove").asBoolean(), graphDb);
 
-            return Response
-                    .status(Response.Status.OK)
-                    .build();
+            return Response.status(Response.Status.OK).build();
 
         } catch (CredentialException e){
             log.error(e.getMessage());
@@ -264,24 +262,26 @@ public class Event {
         return null;
     }
 
-    static void writeAddedBy(final Long userNodeId, final Map<String, Object> userNodeProperties, final Iterable<Label> userNodeLabels, long date, final JsonGenerator jg) throws IOException {
+    static void writeAddedBy(final Long userNodeId, final Map<String, Object> userNodeProperties, final Iterable<Label> userNodeLabels, long date, JsonGenerator jg) throws IOException {
         jg.writeObjectFieldStart("adder");
 
         jg.writeObjectFieldStart("user");
-        User.writeLiteUserRecord(userNodeId, userNodeLabels, userNodeProperties, jg);
+        Framework.writeNodeProperties(userNodeId, userNodeProperties, userNodeLabels, jg);
         jg.writeEndObject();
 
-        jg.writeNumberField("date",date);
+        jg.writeNumberField("date", date);
+
         jg.writeEndObject();
     }
-    static void writeAuthBy(final Long userNodeId, final Map<String, Object> userNodeProperties, final Iterable<Label> userNodeLabels, long date, final JsonGenerator jg) throws IOException {
+    static void writeAuthBy(final Long userNodeId, final Map<String, Object> userNodeProperties, final Iterable<Label> userNodeLabels, long date, JsonGenerator jg) throws IOException {
         jg.writeObjectFieldStart("authoriser");
 
         jg.writeObjectFieldStart("user");
-        User.writeLiteUserRecord(userNodeId, userNodeLabels, userNodeProperties, jg);
+        Framework.writeNodeProperties(userNodeId, userNodeProperties, userNodeLabels, jg);
         jg.writeEndObject();
 
         jg.writeNumberField("date",date);
+
         jg.writeEndObject();
     }
 

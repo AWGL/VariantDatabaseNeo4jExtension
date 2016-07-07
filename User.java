@@ -156,18 +156,4 @@ public class User {
 
     }
 
-    static void writeLiteUserRecord(final long id, final Iterable<Label> labels, final Map<String, Object> properties, JsonGenerator jg) throws IOException {
-        jg.writeNumberField("id", id);
-
-        jg.writeObjectFieldStart("properties");
-        jg.writeObject(properties);
-        jg.writeEndObject();
-
-        jg.writeArrayFieldStart("labels");
-        for (Label label : labels){
-            jg.writeString(label.name());
-        }
-        jg.writeEndArray();
-    }
-
 }
