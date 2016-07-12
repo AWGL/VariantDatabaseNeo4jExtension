@@ -38,9 +38,7 @@ public class Variant {
         this.log = log;
     }
 
-    private static final class Properties {
-        private static final String variantId = "variantId";
-    }
+    //TODO creare population frequencies enum
 
     /**
      * Adds new variant
@@ -57,7 +55,7 @@ public class Variant {
         try {
             JsonNode jsonNode = objectMapper.readTree(json);
 
-            GenomeVariant genomeVariant = new GenomeVariant(jsonNode.get(Properties.variantId).asText());
+            GenomeVariant genomeVariant = new GenomeVariant(jsonNode.get("variantId").asText());
             genomeVariant.convertToMinimalRepresentation();
 
             try (Transaction tx = graphDb.beginTx()) {
