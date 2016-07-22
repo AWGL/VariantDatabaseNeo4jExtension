@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Date;
+import java.util.HashSet;
 
 /**
  * A class for working with variants
@@ -38,7 +39,25 @@ public class Variant {
         this.log = log;
     }
 
-    //TODO creare population frequencies enum
+    enum exac {
+        exacAfrMaf,
+        exacAmrMaf,
+        exacEasMaf,
+        exacFinMaf,
+        exacNfeMaf,
+        exacOthMaf,
+        exacSasMaf
+    }
+
+    enum oneKg {
+        afr1kgMaf,
+        amr1kgMaf,
+        eas1kgMaf,
+        eur1kgMaf,
+        sas1kgMaf,
+        aaEspMaf,
+        eaEspMaf
+    }
 
     /**
      * Adds new variant
@@ -238,12 +257,18 @@ public class Variant {
                             Node featureNode = relationship.getEndNode();
                             Node symbolNode = featureNode.getSingleRelationship(Relationships.hasFeature, Direction.INCOMING).getStartNode();
 
+                            jg.writeStartObject();
+
                             jg.writeObjectFieldStart("annotation");
                             Framework.writeRelationshipProperties(relationship.getId(), relationship.getAllProperties(), relationship.getType().name(), jg);
                             jg.writeEndObject();
 
                             jg.writeObjectFieldStart("feature");
                             Framework.writeNodeProperties(featureNode.getId(), featureNode.getAllProperties(), featureNode.getLabels(), jg);
+                            jg.writeEndObject();
+
+                            jg.writeObjectFieldStart("featurePreference");
+                            //TODO
                             jg.writeEndObject();
 
                             jg.writeObjectFieldStart("symbol");
@@ -421,6 +446,45 @@ public class Variant {
                     .build();
         }
 
+    }
+
+    static int getGlobalVariantOccurrenceQcPass(Node variantNode, GraphDatabaseService graphDb){
+        int occurrence = 0;
+
+        HashSet<String> sampleIds = new HashSet<>();
+
+        try (Transaction tx = graphDb.beginTx()) {
+            for (Relationship relationship : variantNode.getRelationships(Direction.INCOMING)) {
+                Node datasetNode = relationship.getStartNode();
+
+                if (datasetNode.hasLabel(Labels.dataset)) {
+
+                    //check if run has passed QC
+                    Node qcNode = Event.getLastActiveUserEventNode(datasetNode, graphDb);
+                    if (qcNode == null || !(boolean) qcNode.getProperty("passOrFail")){
+                        continue;
+                    }
+
+                    Node sampleNode = datasetNode.getSingleRelationship(Relationships.hasData, Direction.INCOMING).getStartNode();
+
+                    if (sampleIds.contains(sampleNode.getProperty("sampleId").toString())){
+                        continue;
+                    } else {
+                        sampleIds.add(sampleNode.getProperty("sampleId").toString());
+                    }
+
+                    if (relationship.isType(Relationships.hasHetVariant)) {
+                        occurrence += 1;
+                    } else if (relationship.isType(Relationships.hasHomVariant)) {
+                        occurrence += 2;
+                    }
+
+                }
+
+            }
+        }
+
+        return occurrence;
     }
 
 }

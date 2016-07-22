@@ -253,7 +253,6 @@ public class Dataset {
     /**
      * @return Returns all datasets with pending QC requiring auth
      */
-    //TODO broken
     @GET
     @Path("/qc/pending/auth")
     @Produces(MediaType.APPLICATION_JSON)

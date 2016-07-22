@@ -72,6 +72,7 @@ public class Workflow {
                 @Override
                 public void write(OutputStream os) throws IOException, WebApplicationException {
                     JsonGenerator jg = objectMapper.getJsonFactory().createJsonGenerator(os, JsonEncoding.UTF8);
+
                     Node datasetNode = Framework.findDatasetNode(jsonNode.get("sampleId").asText(), jsonNode.get("worklistId").asText(), jsonNode.get("seqId").asText(), graphDb);
                     int class1Calls = 0, not1KGRareVariants = 0, notExACRareVariants = 0, passVariants = 0, total = 0;
 
@@ -97,6 +98,8 @@ public class Workflow {
                             jg.writeObjectFieldStart("inheritance");
                             Framework.writeRelationshipProperties(relationship.getId(), relationship.getAllProperties(), relationship.getType().name(), jg);
                             jg.writeEndObject();
+
+                            jg.writeNumberField("occurrence", Variant.getGlobalVariantOccurrenceQcPass(variantNode, graphDb));
 
                             //stratify variants
                             Node lastActiveEventNode = Event.getLastActiveUserEventNode(variantNode, graphDb);
@@ -238,10 +241,10 @@ public class Workflow {
         //filter variants
         try (Transaction tx = graphDb.beginTx()) {
 
-            for (VariantDatabase.kGPhase3Population population : VariantDatabase.kGPhase3Population.values()) {
+            for (Variant.oneKg population : Variant.oneKg.values()) {
 
-                if (variantNode.hasProperty("kGPhase3" + population.toString() + "Af")){
-                    if ((float) variantNode.getProperty("kGPhase3" + population.toString() + "Af") > maxAlleleFrequency){
+                if (variantNode.hasProperty(population.toString())){
+                    if ((double) variantNode.getProperty(population.toString()) > maxAlleleFrequency){
                         return false;
                     }
                 }
@@ -258,10 +261,10 @@ public class Workflow {
         //filter variants
         try (Transaction tx = graphDb.beginTx()) {
 
-            for (VariantDatabase.exacPopulation population : VariantDatabase.exacPopulation.values()) {
+            for (Variant.exac population : Variant.exac.values()) {
 
-                if (variantNode.hasProperty("exac" + population.toString() + "Af")){
-                    if ((float) variantNode.getProperty("exac" + population.toString() + "Af") > maxAlleleFrequency){
+                if (variantNode.hasProperty(population.toString())){
+                    if ((double) variantNode.getProperty(population.toString()) > maxAlleleFrequency){
                         return false;
                     }
                 }
