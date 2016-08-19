@@ -83,7 +83,7 @@ public class Feature {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
 
@@ -154,13 +154,13 @@ public class Feature {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.BAD_REQUEST)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         } catch (Exception e) {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
 
@@ -233,7 +233,7 @@ public class Feature {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
 

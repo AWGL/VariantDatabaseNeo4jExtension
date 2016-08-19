@@ -83,7 +83,7 @@ public class User {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
     }
@@ -115,7 +115,7 @@ public class User {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
     }
@@ -150,7 +150,7 @@ public class User {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
 

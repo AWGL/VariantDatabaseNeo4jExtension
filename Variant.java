@@ -94,7 +94,7 @@ public class Variant {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
     }
@@ -142,7 +142,7 @@ public class Variant {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
 
@@ -224,7 +224,7 @@ public class Variant {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
     }
@@ -294,7 +294,7 @@ public class Variant {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
 
@@ -302,7 +302,7 @@ public class Variant {
 
     /**
      * Adds variant pathogenicity. class must be in range 1-5.
-     * @param json {variantId,userId,classification,evidence}
+     * @param json {variantId,email,classification,evidence}
      * @return respsonse code
      */
     @POST
@@ -314,16 +314,18 @@ public class Variant {
         try {
 
             JsonNode jsonNode = objectMapper.readTree(json);
+            Node userNode, variantNode;
             int classification = jsonNode.get("classification").asInt();
 
             //check classification is in range
             if (classification < 1 || classification > 5){
-                throw new IllegalArgumentException("Illegal classification. Accepted values are one to five inclusive");
+                throw new IllegalArgumentException("Classification: " + classification + " invalid. Accepted values 1-5.");
             }
 
-            //get nodes
-            Node variantNode = graphDb.findNode(Labels.variant, "variantId", jsonNode.get("variantId"));
-            Node userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email"));
+            try (Transaction tx = graphDb.beginTx()) {
+                variantNode = graphDb.findNode(Labels.variant, "variantId", jsonNode.get("variantId").asText());
+                userNode = graphDb.findNode(Labels.user, "email", jsonNode.get("email").asText());
+            }
 
             //check variant does not already have outstanding auths
             Node lastEventNode = Event.getLastUserEventNode(variantNode, graphDb);
@@ -334,17 +336,22 @@ public class Variant {
                 if (status == Event.UserEventStatus.PENDING_AUTH){
                     throw new IllegalArgumentException("Cannot add pathogenicity. Auth pending.");
                 }
+
             }
 
-            //add event
             try (Transaction tx = graphDb.beginTx()) {
                 Node newEventNode = graphDb.createNode(Labels.pathogenicity);
 
                 //add properties
                 newEventNode.setProperty("classification", classification);
 
-                if (jsonNode.has("evidence") && !jsonNode.get("evidence").asText().equals("")) {
-                    newEventNode.setProperty("evidence", jsonNode.get("evidence").asText());
+                if (jsonNode.has("evidence")) {
+                    String evidence = jsonNode.get("evidence").asText();
+
+                    if (!evidence.equals("")){
+                        newEventNode.setProperty("evidence", jsonNode.get("evidence").asText());
+                    }
+
                 }
 
                 Relationship addedByRelationship = newEventNode.createRelationshipTo(userNode, Relationships.addedBy);
@@ -355,21 +362,19 @@ public class Variant {
                 tx.success();
             }
 
-            return Response
-                    .status(Response.Status.OK)
-                    .build();
+            return Response.status(Response.Status.OK).build();
 
         } catch (IllegalArgumentException e) {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.BAD_REQUEST)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         } catch (Exception e) {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
 
@@ -442,7 +447,7 @@ public class Variant {
             log.error(e.getMessage());
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity((e.getMessage()).getBytes(Charset.forName("UTF-8")))
+                    .entity((e.getLocalizedMessage()).getBytes(Charset.forName("UTF-8")))
                     .build();
         }
 
